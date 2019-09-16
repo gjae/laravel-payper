@@ -1,0 +1,22 @@
+{
+    "name": "gjae/laravel-payper",
+    "description": "Una integracion para aplicaciones laravel que deseen incorporara pagos via payper",
+    "type": "library",
+    "require": {
+        "php": "^7.1.3",
+        "laravel/framework": ">= 5.5.*"
+    },
+    "license": "Apache License 2.0",
+    "authors": [
+        {
+            "name": "Giovanny J. Avila E.",
+            "email": "gjavilae@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Gjae\\LaravelPayper\\": "src/"
+        }
+    }
+}
