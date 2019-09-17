@@ -7,6 +7,7 @@
         "laravel/framework": "^5.5"
     },
     "license": "Apache-2.0",
+    "version": "0.0.1-dev",
     "authors": [
         {
             "name": "Giovanny J. Avila E.",
