@@ -62,6 +62,14 @@ class Payper implements PayperInterface{
 
 
     /**
+     * Settea la descripción de la transacción
+     *
+     * @var string
+     */
+    private $description = null;
+
+
+    /**
      * Valor de la transaccion (total)
      *
      * @var float
@@ -183,6 +191,15 @@ class Payper implements PayperInterface{
         return null;
     }
 
+    public function setDescription(string $description = "")
+    {
+        $this->description = $description;
+    }
+
+    public function getDescription() : ?string
+    {
+        return $this->description;
+    }
     /**
      * Inicia la transaccion pasand como argumento al closure
      * la instancia para asi settear los parametros adicionales

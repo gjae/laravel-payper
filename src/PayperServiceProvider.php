@@ -28,6 +28,10 @@ class PayperServiceProvider extends ServiceProvider {
         $this->publishMigrations();
         $this->publishView();
         Blade::directive('payper_form', function($description){
+            $description_payper_class = app()->make('Payper')->getDescription();
+
+            $description = is_null($description_payper_class) ? $description : $description_payper_class;
+
             return Blade::compileString("@include('vendor.payper.payper_form', ['description' => '{$description}' ])");
         });
         
