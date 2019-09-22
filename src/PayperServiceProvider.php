@@ -27,6 +27,11 @@ class PayperServiceProvider extends ServiceProvider {
         $this->publishConfig();
         $this->publishMigrations();
         $this->publishView();
+
+        /**
+         * Si no se pasa un valor a la descripcion queda como nula
+         * se verifica primero que se le haya pasado un valor a la descripcion al momento de haber llamado el metodo begin
+         */
         Blade::directive('payper_form', function($description = null){
             $description_payper_class = app()->make('Payper')->getDescription();
 
