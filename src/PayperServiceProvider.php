@@ -27,7 +27,7 @@ class PayperServiceProvider extends ServiceProvider {
         $this->publishConfig();
         $this->publishMigrations();
         $this->publishView();
-        Blade::directive('payper_form', function($description){
+        Blade::directive('payper_form', function($description = null){
             $description_payper_class = app()->make('Payper')->getDescription();
 
             $description = is_null($description_payper_class) ? $description : $description_payper_class;
