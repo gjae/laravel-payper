@@ -148,7 +148,7 @@ class Payper implements PayperInterface{
 
         $urlback = $this->checkNullValue('url_back', 'checkout url');
         
-        return $urlback;
+        return $urlback.$aditionalData;
     }
 
     /**
