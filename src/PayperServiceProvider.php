@@ -41,11 +41,7 @@ class PayperServiceProvider extends ServiceProvider {
         });
         
         Blade::directive('payper_url', function(){
-            $aditional = app()->make('Payper')->getAditionalDataAsQueryString() == null 
-            ? '' 
-            : '?'.app()->make('Payper')->getAditionalDataAsQueryString();
-            
-            return config('payper.checkout_url').$aditional;
+            return config('payper.checkout_url');
         });
     }
 
