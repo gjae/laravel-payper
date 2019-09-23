@@ -136,6 +136,11 @@ class Payper implements PayperInterface{
      */
     public function getPayperURLCheckout() : string
     {
+        return $this->checkNullValue('checkout_url', 'checkout url');
+    }
+
+    public function getPayperURLBack() : string 
+    {
         $aditionalData = $this->getAditionalDataAsQueryString();
 
         $aditionalData = is_null($aditionalData) ? '' : '?'.$aditionalData;
@@ -143,11 +148,6 @@ class Payper implements PayperInterface{
         $urlback = $this->checkNullValue('checkout_url', 'checkout url');
         
         return $urlback;
-    }
-
-    public function getPayperURLBack() : string 
-    {
-        return $this->checkNullValue( 'url_back', 'url back' );
     }
 
     /**
