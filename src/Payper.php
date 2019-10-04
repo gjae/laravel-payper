@@ -129,6 +129,17 @@ class Payper implements PayperInterface{
     }
 
     /**
+     * Settea el valor de impuesto para personalizarlo de acuerdo a su uso
+     *
+     * @param float $tax
+     * @return void
+     */
+    public function setPayperTax(float $tax = 0.00)
+    {
+        $this->config['porcentaje_impuesto']    = $tax;
+    }
+
+    /**
      * URL del checkout especificado en el archivo
      * de configuracion
      *
