@@ -32,7 +32,9 @@
     <div class="col s12 m7 offset-m1">
         <div class="card white darken-1">
             <div class="card-content black-text">
-                <form action="#" method="POST">
+                <form action="{{ route('payper-payment') }}" method="POST" id="pay-form">
+                    @csrf
+                    <input type="hidden" name="reference" value="{{ $transaction->getReference() }}">
                     <div class="card-wrapper">
 
                     </div>
@@ -65,7 +67,7 @@
             <div class="col s12 ">
                 <div class="card white darken-1">
                     <div class="card-content black-text">
-                        <span class="card-title">Transacción</span>
+                        <span class="card-title">Datos de la transacción</span>
                         <div class="row">
                             <div class="col s9 text-left" style="text-align: left;">
                                 <strong>{{ $transaction->getDescription() }}</strong>
@@ -77,7 +79,7 @@
                     </div>
                     <div class="row">
                         <div class="col s12 card-action">
-                            <button class="btn orange">PAGAR</button>
+                            <button class="btn orange" id="pay-btn">PAGAR</button>
                         </div>
                     </div>
                 </div>
@@ -95,6 +97,10 @@
 <script src="{{ asset("vendor/laravelpayper/js/jquery.card.js") }}"></script>
 <script src="{{ asset("vendor/laravelpayper/js/card.js") }}"></script>
 <script>
+
+$("#pay-btn").click(e => {
+    $("#pay-form").submit();
+});
 
 var card = new Card({
     // a selector or DOM element for the form where users will
