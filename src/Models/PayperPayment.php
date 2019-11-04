@@ -2,20 +2,28 @@
 namespace Gjae\LaravelPayper\Models;
 use Illuminate\Database\Eloquent\Model;
 
-class PayperPayment extends Model {
+use Gjae\LaravelPayper\Contracts\PaymentContract;
+class PayperPayment extends Model  implements PaymentContract
+{
 
     protected $table = 'payper_payments';
     protected $fillable = [
-        'referencia', 'moneda', 'respuesta', 'cuentanro', 'metodousado', 'autorizacion', 'nrotransaccion', 'payable_type','payable_id', 'valor'
+        'auth_guid', 'auth_resp', 'batch_id', 'response_description', 'tran_nbr', 'reference', 'amount', 'description', 'extra_data', 'response_code'
     ];
 
-    public function payable(){
-        return $this->morphTo();
+    public function models()
+    {
+        return $this->hasMany(\Gjae\Gjae\LaravelPayper\Models\ModelHasTransaction::class, 'payper_payment_id');
     }
 
     public function setMetodousadoAttribute($old)
     {
         $this->attributes['metodousado'] = ( strtolower($old) == 'westerunion' ) ? 'WU' : $old;
+    }
+
+    public function getExtraDataAttribute($old)
+    {
+        return json_decode($old);
     }
 
 }

@@ -3,21 +3,25 @@
 namespace Gjae\LaravelPayper;
 
 use Gjae\LaravelPayper\Contracts\IPayer;
-use Gjae\LaravelPayper\Contracts\IPayable;
-use Gjae\LaravelPayper\Contracts\PayperInterface;
-use Gjae\LaravelPayper\Contracts\PayperRepository;
+use Gjae\LaravelPayper\Contracts\HasTransaction;
 use Gjae\LaravelPayper\Models\PayperPayment;
+use Gjae\LaravelPayper\Models\ModelHasTransaction;
 
 // Exceptions
 
 use Gjae\LaravelPayper\Exceptions\PayperConfigException as ConfigException;
 use Gjae\LaravelPayper\Exceptions\PayableNullException;
+use Gjae\LaravelPayper\Exceptions\NoHasTransactionImplementException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 use Illuminate\Http\Request;
 
+use Gjae\LaravelPayper\Contracts\PaymentContract;
+
+use DB;
 use Closure;
-class Payper implements PayperInterface{
+class Payper implements PaymentContract
+{
 
     /**
      * La configuracion global de la libreria
@@ -27,13 +31,6 @@ class Payper implements PayperInterface{
      */
     private $config     = null;
     
-    /**
-     * El repositorio que hace referencia al modelo
-     * de la BD
-     *
-     * @var Gjae\LaravelPayper\Contracts\PayperRepository
-     */
-    private $repository  = null;
 
     /**
      * Los datos de la solicitud HTTP
@@ -76,47 +73,28 @@ class Payper implements PayperInterface{
      */
     private $valor      = 0.00;
 
-    public function __construct(array $config = null, PayperRepository $model, Request $request ){
+    private $transaction = null;
+
+
+    public function __construct(array $config = null,  Request $request ){
         if( is_null($config) )
             throw new ConfigException("No config available");
 
         $this->config        = $config;
-        $this->repository    = $model;
         $this->request       = $request;
         $this->reference     = $this->getUniqueReference();
+
     }
 
-    /**
-     * Retorno de la clave MD5 
-     *
-     * @return string
-     */
-    public function getPayperMD5Key() : string
+    public function getAccessToken()
     {
-        return $this->checkNullValue('llavemd5', 'md5 key');
+        return $this->config['access_token'];
     }
 
-    /**
-     * Retorna el usuario payper especificado en el archivo de configuracion
-     *
-     * @return string
-     */
-    public function getPayperUser() : string
+    private function checkExcludeCards( $card )
     {
-        return $this->checkNullValue('usuario', 'payper user');
+        return in_array( $card , $this->config['exclude_cards'] );
     }
-
-    /**
-     * Retorna el tipo de moneda especificado en el 
-     * archivo de configuraciones
-     *
-     * @return string
-     */
-    public function getPayperCurrency() : string
-    {
-        return $this->checkNullValue('moneda', 'currency');
-    }
-
     /**
      * Porcentaje de impuesto especificado en el archivo de configuracion
      *
@@ -149,17 +127,6 @@ class Payper implements PayperInterface{
     {
         return $this->checkNullValue('checkout_url', 'checkout url');
         
-    }
-
-    public function getPayperURLBack() : string 
-    {
-        $aditionalData = $this->getAditionalDataAsQueryString();
-
-        $aditionalData = is_null($aditionalData) ? '' : '?'.$aditionalData;
-
-        $urlback = $this->checkNullValue('url_back', 'checkout url');
-        
-        return $urlback.$aditionalData;
     }
 
     /**
@@ -209,6 +176,11 @@ class Payper implements PayperInterface{
         return null;
     }
 
+    public function getAditionalDataAsJson()
+    {
+        return json_encode( count($this->getAditionalData()) > 0 ? $this->getAditionalData() : [] );
+    }
+
     public function setDescription(string $description = "")
     {
         $this->description = $description;
@@ -225,9 +197,62 @@ class Payper implements PayperInterface{
      * @param Closure $function
      * @return void
      */
-    public function begin(Closure $function)
+    public function begin(Closure $closure, $withModel = null)
     {
-        $function($this);
+        DB::beginTransaction();
+        try
+        {
+            $closure($this);
+            $this->makeTransaction();
+            $this->modelHasTransaction($withModel);
+            DB::commit();
+            return $this;
+        }catch(\Exception $e)
+        {
+            DB::rollback();
+            return $e;
+        }
+
+        return $this;
+    }
+
+    private function modelHasTransaction( $withModel = null )
+    {
+        if( !is_null($withModel) )
+        {
+            if( is_array( $withModel ) )
+            {
+                foreach( $withModel as $model ) $this->saveModel( $model );
+            }
+            else if( is_object( $withModel ) && ( $withModel instanceof HasTransaction ) )
+                $this->saveModel( $withModel );
+            else if( is_object( $withModel ) && !( $withModel instanceof HasTransaction ) )
+                $this->throwHasModelException();
+        }
+    }
+
+    private function saveModel(HasTransaction $model)
+    {
+        $model->transactions()->save(
+            new ModelHasTransaction([
+                'payper_payment_id' => $this->transaction->id
+            ])
+        );
+    }
+
+    private function makeTransaction()
+    {
+        $this->transaction = PayperPayment::create([
+            'amount'    => $this->getTotal(),
+            'reference' => $this->getReference(),
+            'description' => $this->getDescription(),
+            'extra_data'  => $this->getAditionalDataAsJson()
+        ]);
+    }
+
+    private function throwHasModelException()
+    {
+        throw new NoHasTransactionImplementException('Object need implements Gjae\\LaravelPayper\\Contracts\\HasTransaction contract');
     }
 
     /**
@@ -305,6 +330,11 @@ class Payper implements PayperInterface{
             throw new ConfigException("Not {$alias} config available");
 
         return $this->config[$index];
+    }
+
+    public function callback(string $reference = '')
+    {
+        return url( config('payper.callback') );
     }
 
 

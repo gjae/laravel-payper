@@ -4,22 +4,36 @@ namespace Gjae\LaravelPayper;
 use Illuminate\Support\ServiceProvider;
 
 use Gjae\LaravelPayper\Payper;
-use Gjae\LaravelPayper\Repositorys\PayperRepository;
+use Gjae\LaravelPayper\Models\PayperPayment;
+use Gjae\LaravelPayper\Classes\PayperGateway;
 
+use Gjae\LaravelPayper\Contracts\PaymentContract;
 use Blade;
 class PayperServiceProvider extends ServiceProvider {
 
     public function register()
     {
         $this->app->singleton('Payper', function($app){
-            return new Payper( config('payper'), new PayperRepository, $app->make('request') );
+            return new Payper( config('payper'),  $app->make('request') );
         }); 
 
-        $this->app->bind(
-            'Gjae\LaravelPayper\Contracts\PayperRepository',
-            'Gjae\LaravelPayper\Repositorys\PayperRepository'
-        );
+        $this->app->bind('Gjae\LaravelPayper\Contracts\PaymentContract', function($app){
+            return PayperPayment::whereReference( request('reference', 'asdasd') )->firstOr(function(){
+                return new class implements PaymentContract {
+                    public $reference = "Not reference";
+                    public $id        = "Not ID";
+                    public $tran_nbr  = "Not TRAN BANK";
+                };
+            });
+        });
+
+        $this->app->bind('Gjae\LaravelPayper\Contracts\GatewayInterface', function($app){
+            $paymentManagement = PayperPayment::whereReference( request('reference', 'asdasd') )->firstOrFail();
+            $gateway = new PayperGateway( $paymentManagement, config('payper.access_token'), request() );
+            return $gateway;
+        });
     }
+
 
 
     public function boot()
@@ -27,6 +41,7 @@ class PayperServiceProvider extends ServiceProvider {
         $this->publishConfig();
         $this->publishMigrations();
         $this->publishView();
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         /**
          * Si no se pasa un valor a la descripcion queda como nula
@@ -57,13 +72,15 @@ class PayperServiceProvider extends ServiceProvider {
     {
         $this->publishes([
             __DIR__.'/../config/payper.php'     => config_path('payper.php')
-        ]);
+        ], 'config');
     }
 
     public function publishView()
     {
         $this->publishes([
-            __DIR__.'/../views'        => resource_path('views/vendor/payper')
+            __DIR__.'/../views'        => resource_path('views/vendor/payper'),
+            __DIR__.'/../assets'        => public_path('vendor/laravelpayper')
         ], 'resources');
     }
+
 } 

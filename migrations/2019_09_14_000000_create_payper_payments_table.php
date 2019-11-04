@@ -11,17 +11,17 @@ class CreatePayperPaymentsTable extends Migration
         Schema::create('payper_payments', function(Blueprint $table){
             $table->bigIncrements('id');
             $table->timestamps();
-            $table->string('referencia', 100)->index();
-            $table->char('moneda', 3)->default('USD');
-            $table->decimal('valor', 12, 2)->default(0.00);
-            $table->enum('respuesta', ['APROBADA', 'RECHAZADA', 'PENDIENTE'])->default('PENDIENTE');
-            $table->string('cuentanro',  100)->default('0000ESP')->index();
-            $table->enum('metodousado', ['TC', 'WU', 'DEPOSITO']);
-            $table->string('autorizacion', 100)->default("0000ESP")->index();
-            $table->string('nrotransaccion', 100)->default('0000ESP')->index();
-
-            $table->string('payable_type')->nullable();
-            $table->integer('payable_id')->default(0);
+            $table->string('auth_guid', 200)->default('ESP')->index();
+            $table->string('auth_resp', 10)->default('--')->index();
+            $table->string('batch_id', 50)->default("--")->index();
+            $table->string('response_description', 200)->nullable();
+            $table->string('tran_nbr', 100)->default('--00--')->index();
+            $table->string('response_code', 100)->nullable();
+            $table->text('description')->nullable();
+            $table->decimal('amount', 12,2)->default(0.00);
+            $table->string('reference', 200)->index();
+            $table->json('extra_data')->nullable();
+            
         });
     }
 

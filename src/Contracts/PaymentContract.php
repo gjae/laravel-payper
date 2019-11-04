@@ -1,6 +1,7 @@
 <?php
+
 namespace Gjae\LaravelPayper\Contracts;
 
-interface IPayable {
+interface PaymentContract{
     
 }
