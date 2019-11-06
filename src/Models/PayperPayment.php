@@ -13,7 +13,7 @@ class PayperPayment extends Model  implements PaymentContract
 
     public function models()
     {
-        return $this->hasMany(\Gjae\Gjae\LaravelPayper\Models\ModelHasTransaction::class, 'payper_payment_id');
+        return $this->hasMany(\Gjae\LaravelPayper\Models\ModelHasTransaction::class, 'payper_payment_id');
     }
 
     public function setMetodousadoAttribute($old)
