@@ -11,6 +11,7 @@ use GuzzleHttp\Client;
 
 use Gjae\LaravelPayper\Exceptions\PayperConfigException;
 use Gjae\LaravelPayper\Exceptions\DebugModeException;
+use Gjae\LaravelPayper\Exceptions\PayperErrorException;
 class PayperGateway implements GatewayInterface
 {
     /**
@@ -45,7 +46,7 @@ class PayperGateway implements GatewayInterface
         $this->form_data = $request;
     }
 
-    public function exec()
+    public function exec($enableExceptions = false)
     {
         try{
             $this->checkConfigAvailable();
@@ -56,7 +57,23 @@ class PayperGateway implements GatewayInterface
             $this->transaction_status = 'failure';
         }
 
+        $this->whereException($enableExceptions);
         return $this;
+    }
+
+    /**
+     * Verifica si existe alguna excepción correspondiente a alguna respuesta
+     * que no sea de tipo "00
+     *
+     * @param boolean $enableExceptions
+     * @return void
+     */
+    public function whereException($enableExceptions = false)
+    {
+        if( $enableExceptions && $this->getAuthResponse() != "00" )
+            throw new PayperErrorException( $this->getResponseDescription() );
+
+        return $this->getAuthResponse() == "00" ? false : new PayperErrorException( $this->getResponseDescription() );
     }
 
     /**
@@ -130,6 +147,16 @@ class PayperGateway implements GatewayInterface
         $this->transaction_status = 'success';
     }
 
+    /**
+     * Verifica si tiene algun algun codigo de respuesta diferente a "00
+     *
+     * @return boolean
+     */
+    public function hasException()
+    {
+        return ! trim( $this->getAuthResponse() )== "00";
+    }
+
     public function redirectTo(array $routeParams = [])
     {
         return redirect()->route( $this->getCallbackRoute('success', $this->transaction_status), $routeParams );
@@ -177,12 +204,13 @@ class PayperGateway implements GatewayInterface
 
     public function getResponseDescription()
     {
-        return $this->paymentManagement->respose_description;
+        return trim($this->paymentManagement->response_description);
     }
 
     public function getTranNbr()
     {
         return $this->paymentManagement->tran_nbr;
     }
+
 
 }
