@@ -48,9 +48,9 @@ class PayperGateway implements GatewayInterface
 
     public function exec($enableExceptions = false)
     {
+        $this->checkExcludeCards( $this->form_data->card_number );
         try{
             $this->checkConfigAvailable();
-            $this->checkExcludeCards( $this->form_data->card_number );
             $this->sendTransaction();
         }catch(\Exception $e)
         {
@@ -106,6 +106,9 @@ class PayperGateway implements GatewayInterface
         $is_debug     = config('payper.debug_mode');
 
         if( $is_debug && !in_array( $card , $debug_cards) ) 
+            throw new DebugModeException( 'Debug mode: card invalid exception' );
+            
+        if( !$is_debug && in_array( $card , $debug_cards) )
             throw new DebugModeException( 'Debug mode: card invalid exception' );
 
         return true;
