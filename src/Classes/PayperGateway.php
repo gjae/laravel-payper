@@ -216,4 +216,9 @@ class PayperGateway implements GatewayInterface
     }
 
 
+    public function setAccessToken(string $access_token)
+    {
+        $this->access_token = empty( $access_token ) ? $this->access_token : trim($access_token);
+    }
+
 }
